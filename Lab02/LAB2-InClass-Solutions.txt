@@ -1,0 +1,148 @@
+1.(a)
+# Generate a function to return LOOCV prediction MSE, with inputs X (matrix) and Y (column vector).
+# Create function name. Open an editing board to generete my function.
+fix(CV);
+# Edit in the attached window.
+function (X,Y) 
+{n = length(Y); u=numeric(length(Y));S=X%*%solve(t(X)%*%X)%*%t(X);for(i in 1:n){u[i]=S[i,i]};mean(((Y-S%*%Y)/(1-u))^2)
+}
+(b)
+# Calculate the LOOCV prediction MSE for the 2 models. Prepare inputs.
+# Load data.
+odor_data=read.table("C:/Users/pengq/Desktop/odor.txt",header=T);
+# Visualize data sheet.
+fix(odor_data)
+# The data frame structure does not support matrice products so we convert it to matrix structure.
+odor_data=data.matrix(odor_data)
+# Extract X and Y for the 2 models.
+X_model_1=cbind(1, odor_data[,2:4], (odor_data[,2:4])^2);
+X_model_2=cbind(1, odor_data[,3:4], (odor_data[,2:3])^2);
+Y=odor_data[,1]
+# Detetmine the LOOCV prediction MSE for Model 1 and Model 2.
+# The LOOCV prediction MSE for Model 1:
+CV(X_model_1,Y)
+# result: [1] 747.2333
+
+# The LOOCV prediction MSE for Model 2:
+CV(X_model_2,Y)
+# result: [1] 666.8952
+
+# Conlusion: The LOOCV prediction MSE is in favor of Model 2.
+
+2.(a)
+install.packages("MASS");
+library(MASS);
+# Use help to check all data variables in "Boston".
+help(Boston);
+# We found the definition of "tax".
+# It says: tax:full-value property-tax rate per $10,000.
+(b)
+# Calculate the median of "tax".
+median(Boston$tax)
+# result: [1] 330
+(c)
+# Use bootstrap sampling method to estimate the standard deviation of the estimate of Boston tax median.
+# Generate a function, in terms of bootstrap sample size B.
+fix(se);
+# Edit in the new window.
+# sample(X,n,replace=TRUE) generates a bootstrap sample.
+function (X, B) 
+{n=length(X);
+C=numeric(B);
+for(i in 1:B){C[i]=median(sample(X,n,replace=TRUE))};
+sd(C)};
+# Test the result for B=1000. Use set.seed(1) to let the return be "constant", so that I can check with mine.
+set.seed(1);
+se(Boston$tax, 1000)
+# Result: [1] 13.51552
+# 95% confidence interval:
+# The normal quantiles of 97.5% is 1.96.
+set.seed(1);
+sigma=se(Boston$tax, 1000);
+c(median(Boston$tax)-1.96*sigma, median(Boston$tax)+1.96*sigma);
+# result: [1] 303.5096 356.4904
+
+Exercise 3
+
+# Load the data "crab.txt". Replace my file path below with yours.
+Crab=read.table("C:/Users/pengq/Desktop/crab.txt", header = T);
+colnames(Crab)=c("Obs","C","S","W","Wt","Sa");
+
+# Apply Poisson regression.
+model=glm(Crab$Sa~1+Crab$W+Crab$Wt,family=poisson(link=log));
+summary(model)
+# Result:
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)   
+(Intercept) -1.29168    0.89929  -1.436  0.15091   
+Crab$W       0.04590    0.04677   0.981  0.32640   
+Crab$Wt      0.44744    0.15864   2.820  0.00479
+
+# Conclusion: from the p-values, only Crab$Wt significantly explains the value of the response Crab$Sa.
+
+Exercise 4
+(a)
+# Set a sequence of time labels with mesh length 10.
+n=length(Camry);
+T=1:n;
+Tdelt =(1:10*n) / n;
+# Produce Bass curve as well as the estmates of all parameters, using nonlinear least squares. Attention: here M,P,Q are initial inputs of m,p,q. P=0.5, Q=0.65 are initial values (the initial values should be well-chosen. we have made many tries to reduce the p-value).
+install.packages("minpack.lm");
+library(minpack.lm);
+Bass.nls= nlsLM(Camry ~ M * ( ((P+Q)^2 / P) * exp(-(P+Q) * T) ) /(1+(Q/P)*exp(-(P+Q)*T))^2, start = list(M=sum(Camry)*1000, P=0.5, Q=0.65));
+summary(Bass.nls)
+
+Formula: Camry ~ M * (((P + Q)^2/P) * exp(-(P + Q) * T))/(1 + (Q/P) * 
+    exp(-(P + Q) * T))^2
+
+Parameters:
+   Estimate Std. Error t value Pr(>|t|)  
+M 1.323e+07  7.443e+06   1.777   0.1008  
+P 3.363e-02  1.645e-02   2.045   0.0635 .
+Q 3.144e-02  4.861e-02   0.647   0.5299 
+#Plot the density function.
+Cusales=cumsum(Camry);
+Bcoef=coef(Bass.nls);
+m=Bcoef[1];
+p=Bcoef[2];
+q=Bcoef[3];
+ngete = exp(-(p+q) * Tdelt);
+Bpdf=m * ( (p+q)^2 / p ) * ngete / (1 + (q/p) * ngete)^2;
+# The estimated density
+plot(Tdelt, Bpdf, xlab = "Time",ylab = "Sales per unit time", type='l');
+# Add true number of sold items per time unit to the previous plot.
+points(T, Camry);
+# Conclusion: The p-values show that Bass model does not fit Camry. This discovers the fact that Camry sales are quite consistent so that it does not follow a Bass model. 
+(b) 
+# Set a sequence of time labels with mesh length 10.
+m=length(Cruiser);
+T=1:m;
+Tdelt =(1:10*m) / m;
+
+# Produce Bass curve as well as the estmates of all parameters. Attention: here M,P,Q are initial inputs of m,p,q.
+Bass.nls= nls(Cruiser ~ M * ( ((P+Q)^2 / P) * exp(-(P+Q) * T) ) /(1+(Q/P)*exp(-(P+Q)*T))^2, start = list(M=sum(Cruiser), P=0.03, Q=0.38));
+# Print the results.
+summary(Bass.nls);
+
+Formula: Cruiser ~ M * (((P + Q)^2/P) * exp(-(P + Q) * T))/(1 + (Q/P) * 
+    exp(-(P + Q) * T))^2
+
+Parameters:
+    Estimate Std. Error t value Pr(>|t|)    
+M  2.788e+05  5.039e+04   5.532 0.000553 ***
+P  3.197e-01  7.847e-02   4.073 0.003566 ** 
+Q -9.798e-02  2.475e-01  -0.396 0.702560  
+
+# Extract the estimates of m,p,q and plot the density function.
+Cusales=cumsum(Cruiser);
+Bcoef=coef(Bass.nls);
+m=Bcoef[1];
+p=Bcoef[2];
+q=Bcoef[3];
+ngete = exp(-(p+q) * Tdelt);
+Bpdf=m * ( (p+q)^2 / p ) * ngete / (1 + (q/p) * ngete)^2;
+# The estimated density
+plot(Tdelt, Bpdf, xlab = "Time",ylab = "Sales per unit time", type='l');
+# Add true number of sold items per time unit to the previous plot.
+points(T, Cruiser);
+# We conclude that Bass model fits Cruiser well. However since p>q, the sales per year is sharply decreasing. Camry has much better record than Cruiser. The sales performance of Camry is too good to fit a Bass curve. No wonder Cruiser has to adjust its market strategy.
