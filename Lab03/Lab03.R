@@ -2,9 +2,7 @@
 CompanyBill=read.table("/Users/skitimoon/Dropbox/2018_1SP/MATH454/Lab/Lab03/CompanyBill.txt",header = TRUE)
 
 dim(CompanyBill)
-for (i in 1:dim(CompanyBill)[2]) {
-  CompanyBill = CompanyBill[-which(CompanyBill[i]==0),]
-}
+CompanyBill = CompanyBill[-which(CompanyBill==0),]
 dim(CompanyBill)
 
 colnames(CompanyBill) = c("V1","V2","V3","V4","V5","V6","V7")
